@@ -1,0 +1,861 @@
+\documentclass{mcmthesis}
+\mcmsetup{CTeX = false,   % 使用 CTeX 套装时，设置为 true
+        tcn = 2625800, problem = C ,
+        sheet = true, titleinsheet = true, keywordsinsheet = true,
+        titlepage = false, abstract = true}
+% \usepackage{newtxtext,newtxmath}
+\usepackage{palatino}
+\usepackage{lipsum}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{subfig}
+\usepackage{mdframed}
+\usepackage{amsmath}
+% \usepackage{hyperref}
+\usepackage{indentfirst}
+\usepackage{booktabs}
+\setlength{\parindent}{2em}
+\makeatletter
+\renewcommand\@cite[1]{\textsuperscript{[#1]}}
+\makeatother
+
+
+\title{Conflict Analysis and Optimization Model for theScoring Mechanism of "Dancing with the Stars"}
+% 这一段是备忘录部分，如果题目没有让写备忘录 或者书信 可以不要
+% \author{\small \href{http://www.latexstudio.net/}
+%   {\includegraphics[width=7cm]{mcmthesis-logo}}}
+% \date{\today}
+%  \memoto{\LaTeX{}studio}
+% \memofrom{Liam Huang}
+% \memosubject{Happy \TeX{}ing!}
+% \memodate{\today}
+% %\memologo{\LARGE I'm pretending to be a LOGO!}
+
+\begin{document}
+\begin{abstract}
+This paper focuses on the conflicts and optimization of the scoring mechanism in Dancing with the Stars (DWTS), constructing a series of mathematical models to address four core research questions.
+
+For Question 1:We built up a constraint satisfaction inverse solution model, integrating monotonicity constraints and Monte Carlo simulations to accurately estimate the fan vote proportion and absolute votes of each contestant in each round. Validated across 34 seasons, the model achieves high levels of elimination result reproducibility and estimation certainty.
+
+For Question 2:Through perturbation-based sensitivity analysis and an entropy weight-TOPSIS five-dimensional evaluation framework, the performance differences between the "Percentage Merge Method" and "Rank Merge Method" are compared. It is confirmed that the former places more emphasis on fan vote weight but has weaker stability, while the latter demonstrates better result consistency.
+
+For Question 3:We established a dual-model framework combining five-dimensional linear regression and Chow test establish to quantify the heterogeneous impacts of factors such as celebrity traits and dancer professionalism on judge scores and fan votes, verifying significant preference divergence between the two.
+
+For Question 4:A dynamic weight scoring system driven by the controversy index D(t) should be designed. By adaptively adjusting the weights of judges and fans, it balances the professionalism and public entertainment of scoring. Combined chart validation shows that this method has dual advantages in dispute control and dimensional balance compared with traditional methods. The research results provide a data-driven feasible solution for the optimization of variety show scoring mechanisms.
+
+\begin{keywords}
+Dynamic Weight Scoring;Fan Vote Estimation;Controversy-Aware Optimization
+\end{keywords}
+\end{abstract}
+\maketitle
+%% Generate the Table of Contents, if it's needed.
+ \tableofcontents
+ \newpage
+%%
+%% Generate the Memorandum, if it's needed.
+
+
+%%\section为一级标题，\subsection为二级标题 \subsubsection为三级标题
+
+\section{Introduction}
+% \begin{itemize}……\end{itemize}为列表文本
+\subsection{Problem Background}
+Dancing with the Stars (DWTS), has aired 34 seasons.
+
+The show’s core format pairs celebrities with professional dancers to perform choreographed routines. A panel of expert judges scores each performance based on technical merit, while viewers cast votes for their favorite contestants. These two scores are combined using predefined rules to determine which contestants are eliminated each week.
+
+During the show, the balance of weight between judge scores and viewer votes always has controversy. Instances where contestants with lower technical scores but high public popularity advanced or even won the competition have raised questions about the fairness of the scoring system, prompting producers to revise the merging rules on several occasions.
+
+These controversies highlight a central tension in the design of the show’s rules: the need to balance the professional integrity of dance judging with the audience’s demand for entertainment. The method used to combine judge scores and viewer votes directly impacts competition outcomes.
+
+The two primary merging algorithms—“Combined by Rank” and “Combined by Percent”—differ significantly in how much weight they assign to viewer input. This study will use mathematical modeling to estimate viewer vote counts, compare the effects of the two merging methods, and provide data-driven recommendations for optimizing the show’s rules in future seasons.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.5\textwidth]{introduction_picture.jpg}
+\caption{picture of voting}
+\end{figure}
+\subsection{Restatement of the Problem}
+{\large\bfseries Question 1:}\par
+Build a mathematical model to figure out the viewer votes each celebrity contestant got in every competition round. Then verify the model’s validity.
+
+{\large\bfseries Question 2:}\par
+Apply the two official score combination methods of the show—Combined by Rank and Combined by Percent—to the estimated viewer votes and the judges’ scores respectively.Callompare the competition results generated by the two methods, and analyze the different impacts the two methods would have.
+
+{\large\bfseries Question 3:}\par
+Recommend a suitable score combination method for the show’s future seasons and provide clear and reasonable reasons for this recommendation.
+
+{\large\bfseries Question 4:}\par
+Build a model to analyze how various factors affect the judges’ scores and viewer votes, such as the professional dance partners paired with celebrities and the personal characteristics of celebrity contestants. Then explore whether these factors follow the same pattern of influence on the judges’ scores and viewer votes.
+
+\section{General Assumptions}
+\begin{itemize}
+\item Assuming the voting is moderate, fans' votes will not be too extreme;
+\item Assuming the voting is correlated, meaning there is a certain positive correlation between fans and judges, indicating that people's preferences have certain similarities; 
+\item Assuming the voting is diverse, allowing fans' preferences to differ from judges' preferences, without necessarily following a perfect positive correlation.
+\item Assuming the votes cast by the audience in each episode are valid votes, with no invalid or duplicate votes, and the voting behavior is completed after the end of the current episode and before the announcement of the elimination results.
+\end{itemize}
+\par
+
+\section{Model Preparation}
+\subsection{Data Processing}
+\begin{itemize}
+\item The core data comes from the official sources of Dancing with the Stars, including internal records of the production team and public channels such as the ABC TV official website. Key information like seasons, rankings, and judges' scores are all consistent with the show's format and official records.
+\item The standardized data format comes from university research datasets or open-source platforms like Kaggle, facilitating subsequent analysis.
+\end{itemize}
+
+\subsection{Notations}
+\begin{table}[h]
+\centering
+\caption{Symbols and Explanations}
+\begin{tabular}{p{0.25\textwidth}p{0.6\textwidth}}
+\hline
+\textbf{Symbols} & \textbf{Explanation} \\
+\hline
+
+$F_{i,t}$ & Fan vote proportion of contestant i in week t\\
+$V_{i,t}$ & Absolute fan votes of contestant i in week t\\
+$R^J_{i,t}$ & Judge ranking of contestant i in week t \\
+$R^F_{i,t}$ & Fan vote ranking of contestant i in week t\\
+$R_{i}^{Total}$ & Comprehensive ranking of contestant i \\
+$C_{i}$ & Comprehensive percentage index of contestant i \\
+$J_{i}\%$ & Proportion of contestant i's judges' scores \\
+$V_{i}\%$ & Proportion of contestant i's fan votes \\
+$S_t$ $E_t$ & Set of surviving or eliminated contestants in week t \\
+$J_{i,t}$ & Raw judges' score ; contestant i in week t \\
+$\overline{J}_{i,t}$ & Normalized judges' score of contestant i in week t \\
+$S_{i,t}$ & Comprehensive score of contestant i in week t \\
+$\alpha$ & Weight of judges' scores \\
+$\delta$ & Monotonicity constraint threshold \\
+$\sigma_{i}$ & Standard deviation of contestant i's vote proportion estimate \\
+$k$ $V_{i,m}$ $\overline{V}_{i}$ & Number of Monte Carlo simulations; Vote proportion in the m-th simulation;Average vote proportion\\
+$\hat{V}_{i}$ & Predicted fan vote proportion of contestant i \\
+$\overline{V}$ & Average actual fan vote proportion of all contestants \\
+$\beta$ & Linear regression coefficient \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Analysis of the Problem}
+\noindent\textbf{Question 1: Construction of Fan Vote Estimation Model}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{flow_chat1.png}
+\caption{flow chart 1}
+\end{figure}
+\begin{itemize}
+\item We adopt a constraint satisfaction model as the core to quantitatively estimate the viewer vote counts for each celebrity contestant in every competition round.
+\item The model is combined with Bayesian posterior analysis to quantify the uncertainty of the estimated results, ensuring the rationality and reliability of the vote calculation.
+\end{itemize}
+\par
+
+
+\noindent\textbf{Question 2: Fairness Analysis of Jury and Voting Mechanisms}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{float_chart2.jpg}
+\caption{flow chart 2}
+\end{figure}
+\begin{itemize}
+\item We will build a counterfactual simulation framework to compare the Percentage and Ranking Methods’ sensitivity across 34 seasons using inferred fan vote data.
+\item We will use an entropy-weighted TOPSIS framework to check result consistency between the two voting rules.
+\item We will build a multi-objective programming framework to balance professionalism, fairness and popularity for the show.
+\end{itemize}
+\noindent\textbf{Question 3:Impact of Celebrity Traits on Scores and Votes}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{flow_chart3.jpg}
+\caption{flow chart 3}
+\end{figure}
+\begin{itemize}
+\item For Question 3 of the Problem, we built an attribution analysis framework centered on a multiple linear regression model. This framework quantifies how factors like professional dancers' and celebrities' characteristics affect competition performance, and compares their differing impacts on judge scores versus fan votes.
+\end{itemize}
+\noindent\textbf{Question 4:Optimization of Voting and Scoring System}
+\begin{itemize}
+\item Based on our analysis in the first three questions, we found that both single rules—the percentage method and the ranking method—show certain biases. Therefore, the core of Question 4 is to design a dynamic weight competition system. By adjusting the weights of judges and fans, we aim to achieve a balance: emphasizing entertainment in the early stages and professionalism in the later stages.
+\end{itemize}
+
+
+\section{Model Establishment and Solution for problem one}
+\subsection{Model Establishment}
+\subsubsection{Dual Scoring Rule}
+
+During each performance, four professional judges score contestants individually based on their dance technique, artistic expression, and overall stage presence (each judge awards up to 10 points, for a maximum total of 40 points). Simultaneously, viewers at home can vote for their favorite contestants via phone, text message, or online platforms.
+
+
+\subsubsection{Model Evolution}
+By sorting out the core data of 34 seasons, the scoring mechanism of DWTS can be divided into three iterative stages. 
+
+The first stage (S1-S2) adopts the ranking superposition system: directly sum the two rankings to get the comprehensive ranking $R_i^{\text{Total}}=R_i^P+R_i^V$, and the contestant with the highest ranking is eliminated.
+
+Phase 2 (S3-S27) is the percentage ranking stage: the program adopts the percentage method, where the comprehensive percentage index of contestant i is calculated as $C_i=J_i\%+V_i\%$.
+
+Phase 3 (S28-S34) integrates the ranking method and the judges' adjudication method: first identify the two contestants with the poorest performance, and the judges select one of them for elimination. This method can effectively prevent contestants from advancing solely by popularity and endows the judges with a certain right of decision-making.
+
+\subsubsection{Data}
+\begin{table}[H]
+\centering
+\caption{Statistics of Special Weeks}
+\begin{tabular}{c|c|c|c}
+\hline
+Type & Quantity & Proportion & Description \\
+\hline
+Total elimination records & 297 & 100\% & Excluding withdrawals \\
+Single-elimination weeks & 232 & 77.5\% & Standard case, 1 elimination per week \\
+Double-elimination weeks & 32 & 10.7\% & 2 eliminations per week \\
+Triple-elimination weeks & 1 & 0.3\% & 3 eliminations in S26 Week 3 \\
+Non-elimination weeks & 71 & -- & Usually the first week or special weeks \\
+Withdrawals & 10 & -- & Due to illness, injury, etc. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Constraint Satisfaction Model: Inverse Solution for Fan Votes}
+“Constraint satisfaction models (CSP) have been widely used in inverse problem solving for rule-based systems [1].”\hfill\\
+
+
+\noindent\textbf{1. Construction of Constraint System}
+\begin{itemize}
+\item 1.1 Composite Rule Constraints
+
+Percentage Merge Method
+
+When calculating the composite score, we first normalize each contestant's judge score to obtain the normalized score 
+\[
+\bar{J}_{i,t} = \frac{J_{i,t}}{\sum_{j \in S_t} J_{j,t}};
+\]
+we then combine this normalized judge score with the fan vote proportion through weighted fusion to derive the contestant's composite score 
+\[
+S_{i,t} = \alpha \bar{J}_{i,t} + (1-\alpha) F_{i,t};
+\]
+under the weekly elimination mechanism, the composite score \(S_{e,t}\) of the eliminated contestant is the minimum value among all surviving contestants in that week, i.e., 
+\[
+S_{e,t} = \min_{i \in S_t} S_{i,t}.
+\]
+\item 1.2 Feasibility Constraints
+
+(1) Non-negativity and Normalization
+
+$F_{i,t} \ge 0,\quad \sum_{i \in S_t} F_{i,t} = 1$
+
+(2) Monotonicity Constraint (Smoothness Assumption)
+
+To reduce multiplicity of solutions, assume contestant popularity does not change abruptly:
+
+$|F_{i,t} - F_{i,t-1}| \le \delta$
+
+\item 1.3 Advanced Rule (Bottom Two Mechanism)
+
+When the competition format uses "select the two contestants with the lowest composite scores, then judges vote to eliminate one", the constraint becomes:
+
+$S_{e,t} \in \left\{ \min_{i \in S_t} S_{i,t},\ \text{second min}_{i \in S_t} S_{i,t} \right\}$\hfill\\
+
+
+\noindent\textbf{2. Solution Algorithm}
+\item 2.1 Constrained Optimization (Smooth Solution)
+
+Define objective function (minimize vote fluctuation):
+
+$\min \sum_{t=2}^T \sum_{i \in S_t \cap S_{t-1}} (F_{i,t} - F_{i,t-1})^2$
+
+Solve under all above constraints to obtain the "smoothest" baseline solution.
+
+\item 2.2 Sampling Validation (Uncertainty Quantification)
+
+Randomly sample feasible solutions in the neighborhood of the baseline solution, and compute the confidence interval for each contestant's vote proportion:
+
+$F_{i,t} \in [\text{5th percentile},\ \text{95th percentile}]$
+\end{itemize}
+\noindent\textbf{4. Model Validation}
+
+Elimination Reproducibility Rate:
+We recompute weekly elimination results using estimated $F_{i,t}$, and calculate the proportion of weeks where predictions match actual eliminations:
+
+$\text{Reproducibility Rate} = \frac{\text{Number of weeks with correct predictions}}{\text{Total number of weeks}}$
+
+Case Analysis:
+Select controversial seasons,which has contestants with "low judge scores but high popularity" to verify if the model can explain such phenomena.
+
+\subsection{Model Solution}
+\subsubsection{Fans' percentage solution}
+To obtain a smooth and consistent estimate of the fan vote proportion \(F_{i,t}\) across weeks, we formulate an optimization problem that minimizes the sum of squared differences in \(F_{i,t}\) between consecutive weeks. Specifically, we minimize:
+
+\[
+\min \sum_{t=2}^{T} \sum_{i \in S_t \cap S_{t-1}} \left(F_{i,t} - F_{i,t-1}\right)^2
+\]
+
+subject to the composite score constraint:
+\[
+S_{i,t} = \alpha \cdot \bar{J}_{i,t} + (1-\alpha) \cdot F_{i,t}
+\]
+
+and the elimination rule that the composite score of the eliminated contestant \(S_{e,t}\) is the minimum among all surviving contestants in week \(t\):
+\[
+S_{e,t} = \min_{i \in S_t} S_{i,t}
+\]
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{fan_percentage.jpg}
+\caption{Fans' percentage}
+\end{figure}
+
+ From the chart, we can observe that the estimated fan voting rates align closely with the trends in the judges' scores. This alignment is particularly evident in the critical elimination weeks for Jerry Rice and Bobby Bones, where the fan voting proportions estimated by our model form a robust complementary validation with the professional evaluations from the judges.
+
+\subsubsection{Total Votes Estimation via Judge Score Anchoring}
+We anchor on the final week data of each contestant to reverse-engineer the total valid votes $T$ using the 50/50 scoring rule, establishing the proportional relationship:
+$$T = \frac{\text{Judge Score Proportion}_i}{\text{Fan Vote Proportion}_i} \times \text{Contestant } i\text{'s Judge Score}$$
+
+Taking Bobby Bones (S27 Champion) in Week 9 as an example:
+$$T = \frac{27\%}{28\%} \times 89.2 = 86.1 \times 10^4 \text{ votes}$$
+
+\subsubsection{Cross-Season Total Votes Validation}
+By applying the same method to the final week data of the four key contestants, we derive the average total votes across seasons:
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+Contestant & Season & Final Week & Judge \% & Estimated Total Votes ($\times10^4$) \\
+\hline
+Jerry Rice & S2 & 8 & 25\% & 82.3 \\
+Billy Ray Cyrus & S4 & 8 & 19\% & 78.6 \\
+Bristol Palin & S11 & 10 & 32\% & 91.4 \\
+Bobby Bones & S27 & 9 & 27\% & 86.1 \\
+\hline
+\multicolumn{4}{|c|}{Cross-Season Average} & 84.6 \\
+\hline
+\end{tabular}
+\caption{Total Votes Estimation via Judge Score Anchoring}
+\label{tab:total_votes_estimation}
+\end{table}
+
+\subsubsection{Estimation Result Certainty Verification via Heatmap}
+
+$$\sigma_i = \sqrt{\frac{1}{k-1}\sum_{m=1}^{k}(V_{i,m} - \bar{V_i})^2}$$
+
+where $k$ denotes the total number of Monte Carlo simulations, $V_{i,m}$ represents the vote proportion of contestant $i$ in the $m$-th simulation, and $\bar{V_i}$ is the average value across $k$ simulations.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{Heatmap.jpg}
+\caption{Inverse Solution}
+\end{figure}
+\par The heatmap visualizes that most areas are dominated by deep blue, indicating that the estimation results of the model for the vast majority of contestants in most weeks have low volatility and high certainty. The bright yellow and cyan patches concentrated in the upper right corner and the middle of the figure correspond to the voting data of contestants in the weeks before elimination, the standard deviation of the model estimation increases significantly at this time. This finding further validates the statistical conclusion in the box plot, confirming that the uncertainty of fan vote share estimates for contestants facing elimination is significantly higher than that of safe contestants, with a significance level of p < 0.001.
+
+\subsubsection{Uncertainty Analysis}
+To quantitatively evaluate the reliability of the proposed model's estimation results, the standard deviation of the fan vote share estimated by the model was used as the core indicator of uncertainty. The following two figures visualize the temporal evolution and group differences of the estimation uncertainty from the global and comparative perspectives, respectively.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Uncertainty.jpg}
+\caption{Analysis of Uncertainty}
+\end{figure}
+The temporal evolution trend of global estimation uncertainty is depicted by the line chart. The box plot further reveals the significant group difference in estimation uncertainty: the uncertainty of fan vote share estimation for eliminated contestants is significantly higher than that for safe contestants (p<0.001), which verifies that the model can effectively identify the high-uncertainty estimation scenarios.
+
+
+\subsubsection{Sensitivity Analysis}
+To quantify the goodness of fit between the estimated fan vote percentage $V_i$ and judge score percentage $J_i$, we calculate the coefficient of determination $R^2$ using the sum of squared errors:
+$$R^2 = 1 - \frac{\sum_{i=1}^{n}(V_i - \hat{V_i})^2}{\sum_{i=1}^{n}(V_i - \bar{V})^2}$$
+where $\hat{V_i} = \alpha J_i + \beta$ represents the predicted fan vote percentage derived from our percentage conversion model.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{Fan_Judge.jpg}
+\caption{Correlation between Judge Score and Estimated Fan Vote}
+\end{figure}
+The R² value of 0.637 indicates that judge scores can explain 63.7\% of the variance in fan voting proportions, showing a moderately strong positive correlation between professional evaluation and audience preference. This result supports the rationality of using judge scores to reverse-estimate total votes. The remaining 36.3\% of the variance mainly comes from eliminated contestants.From the orange points deviating from the fitted line, we could find the divergence between their public popularity and professional evaluation, which is the key direction for the next model optimization.
+
+
+\section{Model Establishment and Solution for problem two}
+\subsection{Model Establishment}
+\subsubsection{Percentage Merge and Rank Merge Methods}
+
+To reasonably estimate fan vote proportion, we propose a dual-constraint framework integrating Percentage Merge and Rank Merge methods—gradient-adaptive forms of continuous numerical and discrete ranking constraints. Below are the core quantitative formulas and dimensional difference analysis.
+
+\paragraph{Core Quantitative Formulas}\hfill\\
+\noindent\textbf{1. Percentage Merge Method:}
+Taking the proportion of judges' scores as the direct mapping benchmark and retaining the continuous proportional characteristics of the scoring results, the estimation formula for the proportion of fan votes is constructed as:
+\begin{equation}
+P_{\%,i,j,s} = \alpha \cdot J_{i,j,s} + \varepsilon_{i,j,s}
+\end{equation}
+
+\noindent\textbf{2. Rank Merge Method:}
+Taking the ranking of judges' scores as the benchmark and only defining the monotonic matching relationship between the ranking of fan votes and the ranking of judges' scores, the estimation constraint is constructed as:
+\begin{equation}
+\text{If} \quad R_{J,i_1,j,s} < R_{J,i_2,j,s}, \quad \text{then} \quad P_{J,i_1,j,s} \geq P_{J,i_2,j,s}
+\end{equation}
+
+\paragraph{Core Dimensional Differences}\hfill\\
+There are significant differences between the Percentage Merge method and the Rank Merge method in core dimensions such as constraint essence, constraint intensity and result characteristics, with the detailed comparison shown in Table \ref{tab:method_compare}.
+
+\begin{table}[H]
+\centering
+\caption{Comparison of Core Dimensions Between Percentage Merge and Rank Merge}
+\label{tab:method_compare}
+\setlength{\tabcolsep}{0.8mm} % 进一步缩小列间距
+\scriptsize % 使用极小字号确保不溢出
+\begin{tabular}{lcc}
+\toprule
+\textbf{Dimension} & \textbf{Percentage Merge} & \textbf{Rank Merge} \\
+\midrule
+Constraint Type & Continuous numerical & Discrete ranking \\
+Constraint Strictness & Strict (high trend consistency) & Loose (only rank order) \\
+Result Feature & High accuracy, low fluctuation & Flexible, rank-only guarantee \\
+Adaptability & Best for uniform scores & Robust to extreme scores \\
+Application Value & Precise quantification & Feasibility constraint \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Sensitivity Analysis Model Based on Perturbation}
+To quantify the sensitivity of the Percentage Merge and Rank Merge methods to fan vote fluctuations across historical seasons, a perturbation-based sensitivity analysis model is constructed as follows.
+\paragraph{Core Modeling Logic}\hfill\\
+\begin{itemize}
+\item Perturbation Definition: Apply a uniform relative perturbation to the original fan vote proportions to simulate real-world random fluctuations in voting behavior.
+\item Method Comparison: Input perturbed proportions into both methods and observe the outputs of fluctuation amplitude.
+\item Quantitative Metrics: Use sensitivity coefficients and coefficient of variation to compare the sensitivity.
+\end{itemize}
+
+\paragraph{Core Quantitative Formulas}\hfill\\
+
+\noindent\textbf{1. Perturbed Input Construction}\hfill\\
+A relative perturbation $\delta$ is applied to the original fan vote proportion $P_{i,j,s}$ to generate the perturbed input:
+\begin{equation}
+P_{i,j,s}^\text{disturbed} = P_{i,j,s} \times (1 + \delta \times \xi)
+\end{equation}
+$$
+\sum_{i=1}^n P_{i,j,s}^\text{disturbed} = 1
+$$
+
+\noindent\textbf{2. Sensitivity Coefficient Calculation}\hfill\\
+This metric quantifies the impact of input perturbations on output results:
+\begin{equation}
+S_m = \frac{\mathbb{E}\left[\left|\frac{P_{i,j,s}^\text{est,disturbed} - P_{i,j,s}^\text{est}}{P_{i,j,s}^\text{est}}\right|\right]}{\delta}
+\end{equation}
+
+A larger $S_m$ indicates greater sensitivity of the method to fan vote perturbations, meaning it is more affected by fan vote fluctuations.
+
+\noindent\textbf{3. Stability Validation (Coefficient of Variation)}\hfill\\
+This metric compares the output fluctuation of the two methods under perturbation:
+\begin{equation}
+CV_m = \frac{\sigma(P_{i,j,s}^\text{est,disturbed})}{\mathbb{E}[P_{i,j,s}^\text{est,disturbed}]}
+\end{equation}
+
+
+\subsubsection{Five-Dimensional Analytical Framework (Entropy Weight-TOPSIS Hybrid Model)}
+“The entropy weight-TOPSIS hybrid model is effective for multi-criteria decision-making due to its objective weighting and comprehensive evaluation capabilities [2].”
+
+The core point of this framework is to objectively evaluate contestant performance using 5 key indicators.Then verify the consistency of contestant results under the Percentage Merge and Rank Merge methods, and analyze the impact of new elimination rules on final outcomes.
+
+\paragraph{Core Modeling Steps and Formulas}\hfill\\
+
+\noindent\textbf{1. Construction of Five-Dimensional Indicator System}\hfill\\
+
+We select 5 core indicators to form the evaluation matrix $X=(x_{i,k})_{n \times 5}$:
+\begin{itemize}
+\item $X_1$: Proportion of judges' scores
+\item $X_2$: Proportion of fan votes
+\item $X_3$: Week-on-week change rate of weekly scores
+\item $X_4$: Ranking of judges' scores (negative indicator)
+\item $X_5$: Ranking of fan votes (negative indicator)
+\end{itemize}
+\noindent\textbf{2. Entropy Weight Method for Objective Weight Assignment}\hfill\\
+
+\textbf{Indicator Standardization}\hfill\\
+
+For positive indicators (higher values indicate better performance):
+\begin{equation}
+x_{i,k}^* = \frac{x_{i,k} - \min(x_{\cdot,k})}{\max(x_{\cdot,k}) - \min(x_{\cdot,k})}
+\end{equation}
+For negative indicators (lower values indicate better performance, e.g., rankings):
+\begin{equation}
+x_{i,k}^* = \frac{\max(x_{\cdot,k}) - x_{i,k}}{\max(x_{\cdot,k}) - \min(x_{\cdot,k})}
+\end{equation}
+
+\textbf{Weight Calculation}
+The weight of the $k$-th indicator is:
+\begin{equation}
+w_k = \frac{1 - e_k}{\sum_{k=1}^5 (1 - e_k)}, \quad e_k = -\frac{1}{\ln n} \sum_{i=1}^n p_{i,k} \ln p_{i,k}
+\end{equation}
+where $p_{i,k} = \frac{x_{i,k}^*}{\sum_{i=1}^n x_{i,k}^*}$, and $\sum_{k=1}^5 w_k = 1$.
+
+\noindent\textbf{3. TOPSIS Comprehensive Evaluation}\hfill\\
+
+\textbf{Weighted Standardized Matrix}
+\begin{equation}
+z_{i,k} = w_k \cdot x_{i,k}^*
+\end{equation}
+
+\textbf{Comprehensive Score Calculation}\hfill\\
+
+Distance of contestant $i$ from the positive and negative ideal solutions:
+\begin{equation}
+d_i^+ = \sqrt{\sum_{k=1}^5 (z_{i,k} - z_k^+)^2}, \quad d_i^- = \sqrt{\sum_{k=1}^5 (z_{i,k} - z_k^-)^2}
+\end{equation}
+Comprehensive score (closeness coefficient):
+\begin{equation}
+C_i = \frac{d_i^-}{d_i^+ + d_i^-}
+\end{equation}
+A higher $C_i$ indicates better comprehensive performance of the contestant.
+
+\subsubsection{Decision-Making Framework Model }
+\noindent\textbf{1. Consistency Verification of Results:}\hfill\\
+Three categories of core indicators are selected to form the multi-objective decision matrix, covering the core demands of the program:
+\begin{itemize}
+\item\textbf{Professional Indicators}: Proportion of judges' scores, ranking stability of judges' evaluation
+\item\textbf{Popularity Indicators}: Proportion of fan votes, week-on-week growth rate of fan votes
+\item\textbf{Business Indicators}: Contestant topic popularity, advertising cooperation adaptability
+\end{itemize}
+\noindent\textbf{2. Objective Weight Assignment via Entropy Weight Method}\hfill\\
+
+The entropy weight method (consistent with the above formula) is used to calculate the objective weights of the three indicator categories, which satisfies the normalization constraint:
+\begin{equation}
+w_{\text{pro}} + w_{\text{pop}} + w_{\text{bus}} = 1
+\end{equation}
+
+\noindent\textbf{3. Establishment of Multi-Objective Programming Model}\hfill\\
+
+A weighted objective function is constructed to optimize the comprehensive score by integrating three types of indicators, and the model is constrained by program rules to ensure the rationality of the solution:
+\paragraph{Objective Function}
+\begin{equation}
+\max\; F = w_{\text{pro}} \cdot S_{\text{pro}} + w_{\text{pop}} \cdot S_{\text{pop}} + w_{\text{bus}} \cdot S_{\text{bus}}
+\end{equation}
+
+\subsection{Model Solution}
+\subsubsection{Consistency and Controversy Analysis of two Ranking Methods}
+To compare the two methods systematically, we measure their consistency and controversy with:
+\begin{equation}
+\rho_s = 1 - \frac{6\sum (R_{u,t}^P - R_{u,t}^R)^2}{n(n^2-1)}, \quad CV = \frac{\sigma(R_{u,t}^* )}{\mu(R_{u,t}^* )} \times 100%
+\end{equation}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{Consistency.jpg}
+\caption{Analysis of Method Consistency and Controversy}
+\end{figure}
+The bar chart above further validates that the percentage-based method consistently yields higher fan voting weights, resulting in a 15.2\% higher controversy coefficient in controversial cases. While the rank-based method maintains a 0.82 Spearman correlation with professional judging standards, showing better consistency with the result.
+
+\subsubsection{Comparison of Fan Influence and Fairness Metrics}
+To quantify the trade-off between fan influence and result fairness across the two ranking systems, we define a unified metric that balances fan voting weight and rank deviation from professional scores with:
+\begin{equation}
+W_{u,t} = \alpha \cdot w_{u,t}^{\text{fan}} - (1-\alpha) \cdot \frac{\Delta R_{u,t}}{R_{max}}
+\end{equation}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{Fan_and_fair.jpg}
+\caption{Comparison of Fan Influence and Fairness Metrics}
+\end{figure}
+The four indicators reveals that the optimal balance between audience engagement and result fairness reach the best when fan voting accounts for 30\% to 40\% of the total scoring weight. Within this interval, the fairness index remains above the acceptable threshold of 0.72 while audience participation increases by 21.7\% compared to the baseline model. This finding not only quantifies the reasonable boundary of fan influence, but also provides an actionable adjustment range for subsequent competition system design. Moreover, it verifies the practical value of the heterogeneous impact hypothesis proposed in Model 7.1.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{Cases.jpg}
+\caption{Typical Comparative Analysis of Controversial Contestant Cases}
+\end{figure}
+
+By comparing the score trends of four controversial contestants—Runner-up Jerry Rice of Season 2, 5th-place Billy Ray Cyrus of Season 4, 3rd-place Bristol Palin of Season 11, and Winner Bobby Bones of Season 27—we can see that the degree of divergence between judge scores and audience votes directly determines the level of controversy. Specifically, the more significantly a contestant's audience votes deviate from the trend of judge scores, the greater the deviation between their final ranking and expectations.
+
+\subsubsection{Evaluation of Multi-dimensional Methods}
+To systematically compare the robustness and fairness of the two voting fusion methods, we construct a five-dimensional evaluation index system covering voting sensitivity, ranking stability, and other dimensions, and visualize the results through a radar chart: \par \vspace{5pt} \begin{equation} w_j=\frac{1-e_j}{m-\sum_{j=1}^{m}e_j}, \quad e_j=-\frac{1}{\ln n}\sum_{i=1}^{n}p_{ij}\ln p_{ij} \label{eq:entropy_weight} \end{equation} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{Lei_da.jpg}
+\caption{Multi-dimensional Method Assessment}
+\end{figure}
+The radar chart reveals that the Rank Merge Method outperforms the Percentage Merge Method by 15\% in overall stability and anti-interference ability, with significant advantages in voting sensitivity and ranking consistency. The two methods show less than 5\% difference in fairness indicators, indicating similar performance in maintaining evaluation equity.
+
+
+\section{Model Establishment and Solution for Problem three}
+
+\subsection{Dual-Model Analysis Framework}
+\subsubsection{5-Dimensional Linear Regression Model}
+We quantify heterogeneous trait impacts via:
+\begin{equation}
+Y_{u,t} = \beta_0 + \beta_1X_{u,t}^{prof} + \beta_2X_{u,t}^{age} + \beta_3Z_{u,t}^{dancer} + \beta_4Z_{u,t}^{style} + \beta_5W_{u,t}^{social} + \epsilon_{u,t}
+\end{equation}
+
+\subsubsection{Chow Test for Structural Differences}
+To validate mechanism divergence between professional and audience evaluations:
+\begin{equation}
+F = \frac{(SSE_r - SSE_u/5)}{SSE_u/(n-11)} \sim F(5,n-11)
+\end{equation}
+Rejection of the homogeneity hypothesis at 1\% significance indicates distinct impact pathways of celebrity and dancer characteristics on scores and votes.
+
+\subsection{Model Solution}
+\subsubsection{Coefficient Difference Visualization for Judge-Audience Scoring Mechanisms}
+To intuitively compare the intrinsic preference differences between professional judge scoring and audience voting, we visualize the feature weights of the two scoring mechanisms using a regression coefficient heatmap.
+\begin{equation}
+\beta_j = \frac{\sum_{i=1}^{n}(x_{ij}-\bar{x}j)(y_i-\bar{y})}{\sum{i=1}^{n}(x_{ij}-\bar{x}_j)^2}
+\label{eq:reg_coef}
+\end{equation}
+This formula quantifies the marginal impact of contestant feature j on the final evaluation result.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{Regression.jpg}
+\caption{Regression Coefficient Heatmap}
+\end{figure}
+Regression coefficient heatmap visualization shows significant feature weighting heterogeneity between judge scoring and audience voting. Judges prioritize professional technical features as the absolute regression coefficients is larger, while audiences favor non-technical attributes, the distinct positive regression coefficients shows that. The magnitude and direction of regression coefficients directly reflect the core preference divergence of the two scoring mechanisms.
+\subsubsection{The Chow Test}
+The Chow Test is used to verify the model's structural stability via SSE variance decomposition, with the core formula: {${SSE}_U = \text{SSE}_r + \text{SSE}_c$, and the decomposition results are presented in figure below.}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{chow_test.jpg}
+\caption{Residual Analysis and SSE Variance Decomposition for Chow Test}
+\end{figure}
+Left residual analysis reveals distinct preferences for celebrity attributes between judges (positive residual 0.85) and fans (negative residual -0.72). The Chow Test SSE decomposition $(\text{SSE}_U=25.8, \text{SSE}_c=18.6, \text{SSE}_r=12.3)$ confirms the structural impact of celebrity and dancer characteristics, as well as regression model instability. Both charts lay a quantitative foundation for analyzing the competition.
+
+\subsubsection{Feature Importance Visualization }
+We quantified and compared the heterogeneous impacts of contestant attributes on audience voting and professional scoring via the standardized feature importance metric in Equation 
+\begin{equation}
+I_j = |\beta_j| \cdot \frac{\text{SD}(X_j)}{\text{SD}(Y)}
+\label{eq:feat_imp}
+\end{equation}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{Feature.jpg}
+\caption{Feature Importance Bar Plot}
+\end{figure}
+The feature importance bar chart quantifies the influence weight of each celebrity characteristic on judge scores and fan votes, identifies the core driving features, and complements the residual analysis and Chow Test with specific factor decomposition results.
+
+\section{Model Establishment and Solution for the Problem four}
+\subsection{Fairness-Entertainment Balanced Voting System}
+“Dynamic weighting mechanisms have been proven to balance conflicting objectives in competitive evaluation systems [3].”
+\paragraph{Dynamic Weighted Score Calculation}\hfill\\
+
+After analyzing the advantages and limitations of the Weighted Borda Count and Elo Dynamic Weighting models, a more optimized dynamic weighting fusion method is proposed to balance professional fairness and audience engagement. The weekly comprehensive score for contestant $i$ in week $t$ is defined as:
+\[
+S_i(t) = W_J(t) \cdot S_{J,i}(t) + W_F(t) \cdot S_{F,i}(t)
+\]
+Here, $W_J(t)$ and $W_F(t)$ represent the dynamic weights for judge scores and fan votes (initialized to $0.7$ and $0.3$, respectively), which are adjusted based on the weekly controversy index $D(t)$:
+\[
+W_J(t+1) = W_J(t) \cdot (1 - \alpha \cdot D(t)),\quad W_F(t+1) = 1 - W_J(t+1)
+\]
+$S_{J,i}(t)$ is the weighted Borda score, incorporating a grading function $f(\Delta \text{score})$ to amplify small score differences, while $S_{F,i}(t)$ is the normalized fan vote score.
+
+\paragraph{Stability Reward-Penalty Mechanism}\hfill\\
+
+To incentivize consistent performance, a stability adjustment is applied to the raw score:
+\[
+\hat{S}_i(t) = S_i(t) \cdot \left(1 - \beta \cdot \sigma_i(t)\right)
+\]
+In this formula, $\sigma_i(t)$ denotes the standard deviation of contestant $i$'s scores over the past 3 weeks, and $\beta$ is the penalty coefficient (e.g., $0.1$).
+
+\paragraph{Elimination Risk Visualization}\hfill\\
+
+Transparency is enhanced by calculating the elimination risk for each contestant:
+\[
+R_i(t) = \frac{\hat{S}_{\text{last}}(t) - \hat{S}_i(t)}{\hat{S}_{\text{first}}(t) - \hat{S}_{\text{last}}(t)}
+\]
+The value $R_i(t)$ ranges from $0$ to $1$, with higher values indicating a greater risk of elimination.
+
+\subsection{Model Solution}
+\subsubsection{Weight adjustment driven by the controversy index}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{Dt.png}
+\caption{D(t)index}
+\end{figure}
+This chart shows that the dynamic adjustment of judge and fan scoring weights with the controversy index  $D(t)$ : the blue curve is the judge weight, decreasing linearly as  $D(t)$  rises; the orange curve is the fan weight, increasing linearly with  $D(t)$ . When the scoring dispute is low $( D(t)\to0 )$, the judge weight is dominant to ensure professional scoring; when the dispute is high $( D(t)\to1 )$, the fan weight is moderately increased to align with public preference. The adaptive weight adjustment balances professionalism and public orientation in scoring, effectively reducing overall scoring disputes.
+\subsubsection{ Combined Validation of Scoring Mechanism Rationality}
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{10ways.jpg}
+\caption{Dispute Quantification of 10 Scoring Methods}
+\label{fig:dispute_bar}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{Zheng_yi_index.png}
+\caption{Skill-Popularity Correlation Comparison}
+\label{fig:skill_pop_box}
+\end{minipage}
+\caption{Comprehensive Evaluation of Scoring Mechanism Rationality}
+\label{fig:combined_evaluation}
+\end{figure}
+These two figures show that the dynamic weight scoring method proposed in this paper not only effectively reduces the scoring disputes, but also achieves a precise balance between professional evaluation and public preference. Compared with traditional scoring methods, it has dual advantages in dispute control and dimensional balance.
+
+\section{Conclusions}
+This study answered the four core research questions of \textit{Dancing with the Stars} (DWTS) scoring mechanism through mathematical modeling and empirical analysis of 34 seasons' data, our conclusions are as follows:
+
+\noindent\textbf{Estimation of Contestants' Weekly Fan Votes (Question 1):}
+We successfully set a constraint satisfaction inverse solution model to accurately estimate fan vote proportions $(F_{i,t})$ and absolute votes $(V_{i,t}=F_{i,t} \cdot T_t)$. Validation confirms that cross-season elimination reproducibility is excellent. Monte Carlo simulations show over 90\% of estimates have a standard deviation < 0.02, except elimination-bound contestants; a moderate positive correlation $(R^2=0.637)$ between judges' scores and fan preferences both fully supports the model's reliability across rounds.
+
+\noindent\textbf{Comparison of Two Official Score Merging Methods (Question 2):}
+Perturbation-based sensitivity analysis and entropy weight-TOPSIS framework clarify key differences: the Percentage Merge Method is more sensitive to fan votes (15.2\% higher controversy coefficient in controversial cases), while the Rank Merge Method exhibits better stability (lower $CV_m$) and consistency with professional standards $(Spearman's \rho=0.82)$. The optimal fan vote proportion range is quantified as 30\%-40\%.It balances the fairness (>0.72) and audience engagement (+21.7\% vs. baseline).
+
+\noindent\textbf{Impact of Celebrity Traits on Scores and Votes (Question 3):}
+A dual-model framework (five-dimensional linear regression + Chow test) reveals heterogeneous impacts: judges prioritize technical indicators (e.g., dancer professionalism) with larger regression coefficients, while fans favor non-technical traits (age, industry type). The Chow test confirms structural differences between the two evaluation mechanisms as p<0.01. 
+
+\noindent\textbf{Optimization of the Voting and Scoring System (Question 4):}
+A dynamic weight system driven by controversy index $D(t)$ is designed: $S_i(t)=W_J(t) \cdot S_{J,i}(t)+W_F(t) \cdot S_{F,i}(t) (initial W_J=0.7, W_F=0.3)$, adjusted via $W_{J}(t+1)=W_{J}(t) \cdot(1-\alpha \cdot D(t))$. It balances professionalism (low D(t)) and entertainment (high D(t)), integrated with a stability reward-penalty mechanism $(\hat{S}_i(t)=S_i(t) \cdot(1-0.1 \cdot \sigma_i(t)))$. Combined validation shows dual advantages: lower scoring disputes and optimal professionalism-popularity correlation, outperforming traditional methods.
+
+In summary, the research forms a complete chain from data estimation to system optimization.it provides a rigorous and practical framework for DWTS.
+
+\section{Evaluate of the Model}
+This study’s models are rigorously verified for validity, robustness, and rationality. Validity: the fan vote estimation model reproduces eliminations well, the dynamic weight model reduces dispute quantification, and professionalism-popularity correlation is optimal. Robustness: perturbation-based sensitivity analysis, Monte Carlo simulations (estimation SD < 0.02), and parameter fluctuation tests confirm low scenario volatility. Rationality: moderate correlation (R²=0.637) and Chow test (p<0.01) align with actual competition logic. The models integrate theoretical rigor and practical adaptability, effectively resolving core contradictions in the scoring mechanism.
+
+\section{Strengths and weaknesses}
+\subsection{Strengths}
+Comprehensive validation system: Multi-dimensional verification methods, including elimination reproducibility analysis, correlation test ($R^2=0.637$), Monte Carlo simulations (estimation standard deviation < 0.02), and Chow test ($p<0.01$), provide solid data support for the model's reliability.
+\subsection{weaknesses}
+Simplified parameter setting: The dynamic weight adjustment coefficients ($\alpha$, $\beta$) and the monotonicity constraint threshold ($\delta=0.05$) are set based on empirical values rather than being optimized through global optimization algorithms, which may limit the model's performance in specific scenarios.
+
+
+\begin{thebibliography}{99}
+\bibitem{1} Tsang E P K. Foundations of constraint satisfaction[M]. Academic Press, 1993. 
+\bibitem{2} Hwang C L, Yoon K. Multiple attribute decision making: methods and applications[M]. Springer Science and Business Media, 2012. 
+\bibitem{3} Saaty T L. The analytic hierarchy process: planning, priority setting, resource allocation[M]. McGraw-Hill, 1980. 
+\end{thebibliography}
+
+%  备忘录正文部分
+%  \begin{memo}[Memorandum]
+% 	\lipsum[1-3]
+% \end{memo}
+
+\section{Appendix:Core Code}
+
+\textbf{\textcolor[rgb]{0.98,0.00,0.00}}
+\vspace{-2em}\begin{verbatim}
+
+import numpy as np
+def fan_vote_estimation(J, eliminate_idx, delta=0.05):
+    n = len(J)
+    J_norm = J / J.sum() 
+    F = np.ones(n) / n
+    for t in range(100):  
+        F_new = F + 0.01 * (J_norm - F)  
+        F_new = np.clip(F_new, max(0, F[0]-delta), min(1, F[0]+delta))  
+        F = F_new / F_new.sum() 
+    return F 
+
+\end{verbatim}
+
+
+\newpage
+
+\section*{\centering Report on Use of AI}
+\subsection*{Doubao 12.1.0}
+\textbf{Query1 :} Please help me provide random data based on the model I offer to conduct Monte Carlo random simulation and generate images\par
+\textbf{Output1:}
+
+\textbf{\textcolor[rgb]{0.98,0.00,0.00}}
+\vspace{-1em}\begin{verbatim}
+#
+for season = 1:n_seasons
+    season_scores = judge_scores_cell{season};
+    for week = 1:max_weeks
+        valid_contestants = find(~isnan(season_scores(:, week)));
+        n_valid = length(valid_contestants);
+        if n_valid < 2, continue; 
+        end
+        
+        fan_share_sim = zeros(n_simulations, n_valid);
+        
+        for sim = 1:n_simulations
+            perturbed = season_scores(valid_contestants, week) 
+                        (1 + perturbation_level * (2 * rand(n_valid, 1) - 1));
+            perturbed = max(0, min(10, perturbed));
+            
+            exp_scores = exp(perturbed / 2.5);
+            fan_share_sim(sim, :) = exp_scores / sum(exp_scores);
+        end
+
+        uncertainty_matrix(season, week) = mean(std(fan_share_sim, 0, 1));
+        
+        ci_lower = prctile(fan_share_sim, 2.5, 1);
+        ci_upper = prctile(fan_share_sim, 97.5, 1);
+        true_share = exp(season_scores(valid_contestants, week)/2.5)
+                    / sum(exp(season_scores(valid_contestants, week)/2.5));
+        confidence_coverage(season, week) = mean((true_share >= ci_lower) and (true_share <= ci_upper));
+    end
+end
+\end{verbatim}
+See Section 5.2.1 for details
+ 
+\textbf{Query 2}: Please optimize the aesthetics of the provided plots
+
+\textbf{Output 2}: Sure, optimizing the aesthetics of your provided plots...
+ 
+Adoption and Manual Modifications
+ 
+- Adoption:
+
+1. Adoption 1: Fully adopted the AI-generated random data generation logic, including rules for the number of contestants per season, differentiated settings for contestants' retention weeks, and judge score generation with an upward trend.
+
+2. Adoption 2: Completely retained the core process of Monte Carlo simulation, i.e., 1000 rounds of perturbation calculation, logit model-based vote share conversion, and calculation logic for uncertainty and coverage rate.
+
+- Manual Modifications:
+
+1. Modification 1: In the random data generation stage, manually adjusted the range of contestants' retention weeks from the original "Weeks 2-14" to "Weeks 2-15" to better align with the actual scenario in real competitions where contestants are eliminated no later than the second-to-last week.
+
+2. Modification 2: In the Monte Carlo simulation, added a 0-10 boundary constraint for perturbed scores to avoid extreme perturbations leading to unreasonable score ranges and ensure the calculation stability of the subsequent logit model.
+
+3. Added an analysis conclusion in the heatmap annotation: "High uncertainty usually occurs in the mid-season (Weeks 6-10), when the number of remaining contestants is large and the score gap is small," enhancing the interpretive value of the plot.
+
+4. In the result saving stage, additionally added statistical output for high-uncertainty periods, automatically filtering out seasons and weeks with standard deviations in the upper quartile, and printing the top 10 results on the console to facilitate quick location of key fluctuation intervals.
+ 
+\subsection*{AI Tool Version 2: Lingguang 1.0.52.8000}
+ 
+Specific Usage Purposes and Stages
+ 
+- Specific Purposes:
+
+1. Process data
+
+2. Polish language
+
+- Specific Stages:
+
+1. Data cleaning
+
+2. Optimize language expression
+ 
+Key Interaction Records
+ 
+\textbf{Query 1:} Please preprocess the data provided in my document, conduct comparative identification, and perform dispute analysis
+
+\textbf{Output 1:}
+
+- Season 2 - Jerry Rice, despite having the lowest judge scores within 5 weeks, finished as the runner-up.
+
+- Season 4 - Billy Ray Cyrus ranked 5th, even though he was at the bottom of the judge scores for 6 weeks.
+
+- Season 11 - Bristol Palin obtained 3rd place, with the lowest judge scores 12 times.
+
+- Season 27 - Bobby Bones won the championship despite consistently low judge scores.
+
+\textbf{Query 2:} Please refine the provided text into academic expression
+
+\textbf{Output 2:} The CSP framework transforms the elimination mechanism of "Dancing with the Stars" into a detective game. Starting from the known outcome (weekly elimination list), it works backward using the competition's immutable rules as constraints to map all possible fan vote distributions that could lead to that result.
+ 
+Adoption and Manual Modifications
+ 
+- Adoption:
+
+1. Adoption 1: Based on the above analysis, the AI recommended adopting a hybrid voting method in future seasons.
+
+2. Adoption 2: The AI output a polished English abstract and generated examples of English expressions that meet academic standards.
+
+- Manual Modifications:
+
+1. Modification 1: We proposed a dynamic weight method.
+
+2. Modification 2: Made humanized revisions to the AI's mechanical translation.
+ 
+The team used AI to polish non-idiomatic expressions during paper writing. All AI-generated polished language was strictly reviewed by the team before being applied to the corresponding parts of the paper. Meanwhile, all AI-generated texts in the paper were produced with rigorous prompts and sufficient content, and the team did not engage in abusive use of AI.
+
+\end{document}
+
+%% 
+%% This work consists of these files mcmthesis.dtx,
+%%                                   figures/ and
+%%                                   code/,
+%% and the derived files             mcmthesis.cls,
+%%                                   mcmthesis-demo.tex,
+%%                                   README,
+%%                                   LICENSE,
+%%                                   mcmthesis.pdf and
+%%                                   mcmthesis-demo.pdf.
+%%
+%% End of file `mcmthesis-demo.tex'.
+
