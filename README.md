@@ -8,7 +8,7 @@
 
   <p align="center">
     <a href="https://github.com/Zhouyi-Wang"><img src="https://img.shields.io/badge/GitHub-Zhouyi--Wang-blue?style=flat-square&logo=github" alt="GitHub"></a>
-    <a href="mailto:"><img src="https://img.shields.io/badge/Email-Contact%20Me-red?style=flat-square&logo=gmail" alt="Email"></a>
+    <a href="mailto:wangzhouyi63@gmail.com"><img src="https://img.shields.io/badge/Email-Contact%20Me-red?style=flat-square&logo=gmail" alt="Email"></a>
     <img src="https://img.shields.io/badge/Python-3.8%2B-3776AB?style=flat-square&logo=python" alt="Python">
     <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" alt="PyTorch">
     <img src="https://img.shields.io/badge/LaTeX-008080?style=flat-square&logo=latex" alt="LaTeX">
@@ -183,7 +183,7 @@ python laurent_pinn.py
   <a href="https://github.com/Zhouyi-Wang">
     <img src="https://img.shields.io/badge/GitHub-Zhouyi--Wang-181717?style=for-the-badge&logo=github" alt="GitHub">
   </a>
-  <a href="mailto:your.email@example.com">
+  <a href="mailto:wangzhouyi63@gmail.com">
     <img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email">
   </a>
 </p>
