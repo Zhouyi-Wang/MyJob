@@ -1,0 +1,109 @@
+\documentclass[12pt,a4paper]{article}
+
+% 数学核心宏包（ctexart已内置基础数学，这里补充高级功能）
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+
+% 页面与列表
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{enumitem}
+
+% 常用集合符号快捷命令
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\cart}{\times}
+\newcommand{\inter}{\cap}
+\newcommand{\union}{\cup}
+
+% 定理/命题环境
+\newtheorem*{proposition}{Proposition}
+\newtheorem*{example}{Example}
+\newtheorem*{definition}{Definition}
+
+\begin{document}
+\begin{center}
+\LARGE \textbf{MTH024 Quiz1}
+\end{center}
+
+\noindent{\Large \textbf{Problem 1}}\\
+$A \cup B = \{x|x \in A \;\ or \;\ x \in B\} = \{1,2,3,4,5,6,7\}$\\
+$A \cap B = \{x|x \in A \;\ and \;\ x \in B\}$ =\{4,5\}
+
+\vspace{1.5em}
+
+\noindent{\Large \textbf{Problem 2}}\\
+$Define:E^c $ is set of odd nimbers\\
+$E^c = \{x\in \mathbb{N} | x\;\ is\;\ odd\;\ numbers \}=\{x\in \mathbb{N} | x=2k+1,k \in \mathbb{N} \cap \{0\}\}$
+
+\vspace{1.5em}
+\noindent{\Large \textbf{Problem 3}}\\
+$ x \in A \cap(B \cup C  ) \Leftrightarrow x \in A \;\ and \;\ x \in B \cup C $\\
+$\Leftrightarrow x \in A \;\ and \;\ (x\in B \;\ or \;\ x \in C) $\\
+$\Leftrightarrow (x \in A \;\ and \;\ x \in B) \;\ or \;\ (x \in A \;\ and \;\ x \in C)$\\
+$\Leftrightarrow x \in A \cap B \;\ or \;\ x \in A \cap C $\\
+$\Leftrightarrow x \in (A \cap B)\cup (A \cap C)$
+
+\vspace{1.5em}
+\noindent{\Large \textbf{Problem 4}}\\
+$(a):\mathbb{Z} \;\ \mathbb{R} \;\ \mathbb{Q} $\\
+$(b):\mathbb{Q} \;\ \mathbb{R} $\\
+$(c):\mathbb{R} $\\
+$(d):\mathbb{Q} \;\ \mathbb{R} $
+
+\vspace{1.5em}
+\noindent{\Large \textbf{Problem 5}}\\
+let $a$ be an even number, $a=2k$, $b$ is any integer\\
+$a\times b=2k\times b=2(kb)$\\
+$\because 2(kb) \;\ is \;\ even$,\\
+$\therefore a\times b$ is even.
+
+\vspace{1.5em}
+\noindent{\Large \textbf{Problem 6}}\\
+Suppose for contradiction that $n$ is an odd number, such that $n^2$ is even.\\
+$\because n=2k+1$\\
+$\therefore n^2=4k^2+4k+1=2(2k^2+2k)+1$\\
+$\because 2(2k^2+2k)$ is an even number\\
+$\therefore 2(2k^2+2k)+1$ is an odd number \\
+But this is not true since $n^2$ is even.\\
+Hence if $n^2$ is an even integer, then $n$ must also be an even integer.
+
+\vspace{1.5em}
+\noindent{\Large \textbf{Problem 7}}\\
+Suppose for contradiction that $ \sqrt{2} $ is an rational number, \\
+Exist coprime integers $p$ and $q(q\neq 0)$ such that $ \sqrt{2}=\frac{p}{q} $.\\
+$\therefore 2=\frac{p^2}{q^2} \Rightarrow p^2=2q^2$\\
+$\therefore p$ is even, let $p=2k$\\
+$\because (2k)^2=2q^2\Leftrightarrow q^2=2k^2$\\
+$\therefore q$ is even.\\
+Since $p$ and $q$ are both even numbers, $p$ and $q$ are not coprime. 
+But it is not true since $p$ and $q$ should be coprimed, then $ \sqrt{2} $ is an irrational number.
+
+\vspace{1.5em}
+\noindent{\Large \textbf{Problem 8}}\\
+base: when $n=1$, $1=\frac{1\times (1+1)}{2}$ satisfies the function.\\
+induction: when $n=k$, $1+2+\dots +k=\frac{k(k+1)}{2}$,\\
+At the same time, when $n=k+1$, $1+2+\dots +k+1=\frac{k(k+1)}{2}+(k+1)$\\
+$\because \frac{k(k+1)}{2}+(k+1)= \frac{(k+1)(k+2)}{2}$ \\
+$\therefore 1+2+\dots +n=\frac{n(n+1)}{2}$ is proved.
+
+\vspace{1.5em}
+\noindent{\Large \textbf{Problem 9}}\\
+base: when $n=1$, $1^2=\frac{1\times (1+1)\times (2+1)}{6}$ satisfies the function.\\
+induction: when $n=k$, $1^2+2^2+\dots +k^2=\frac{k(k+1)(2k+1)}{6}$,\\
+At the same time, when $n=k+1$, $1^2+2^2+\dots +(k+1)^2=\frac{k(k+1)(2k+1)}{6}+(k+1)^2$\\
+$\because \frac{k(k+1)(2k+1)}{6}+(k+1)^2=\frac{(k+1)(k+2)(2k+3)}{6}=\frac{(k+1)(k+2)(2(k+1)+1)}{6}$\\
+$\therefore 1^2+2^2+\dots +n^2=\frac{k(k+1)(2k+1)}{6}$ is proved.
+
+\vspace{1.5em}
+\noindent{\Large \textbf{Problem 10}}\\
+base: when $n=4$, $4!=24>2^4=16$ satisfies $n^2>2^n$.\\
+induction: when $n=k$, $k!>2^k$,\\
+At this time, when $n=k+1$, $(k+1)!=(k+1)k!>(k+1)2^k$ \\
+$\because n\geqslant 4$\\
+$\therefore k+1\geqslant  5 >2$\\
+$\because (k+1)2^k>2\times 2^k=2^{k+1}$\\
+$\therefore (k+1!)>2^{k+1}$\\
+$\therefore n!>2^n$ is proved.
+\end{document}
